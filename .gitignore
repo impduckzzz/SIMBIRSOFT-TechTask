@@ -1,0 +1,15 @@
+.pytest_cache/
+__pycache__/
+*.py[cod]
+*.log
+.venv/
+allure-report/
+allure-results/*
+!allure-results/.gitkeep
+artifacts/*
+!artifacts/.gitkeep
+.tools/
+.selenium-cache/
+.chrome-shot/
+!artifacts/allure-report.png
+.chrome-tmp/
