@@ -1,8 +1,11 @@
 .pytest_cache/
+pytest-cache-files-*/
 __pycache__/
 *.py[cod]
 *.log
 .venv/
+.idea/
+.vscode/
 allure-report/
 allure-results/*
 !allure-results/.gitkeep
