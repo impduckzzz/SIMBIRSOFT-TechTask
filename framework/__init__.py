@@ -1,1 +1,1 @@
-"""Core framework utilities for UI automation."""
+"""Core Selenium framework utilities."""

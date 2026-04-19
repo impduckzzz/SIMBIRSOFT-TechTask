@@ -1,0 +1,52 @@
+from __future__ import annotations
+
+from pathlib import Path
+
+from selenium import webdriver
+from selenium.webdriver.chrome.options import Options as ChromeOptions
+from selenium.webdriver.remote.webdriver import WebDriver
+
+from config.settings import SETTINGS
+
+
+COMMON_CHROME_PATHS = (
+    r"C:\Program Files\Google\Chrome\Application\chrome.exe",
+    r"C:\Program Files (x86)\Google\Chrome\Application\chrome.exe",
+)
+
+
+def _resolve_chrome_binary() -> str | None:
+    if SETTINGS.chrome_binary:
+        configured_path = Path(SETTINGS.chrome_binary)
+        if configured_path.exists():
+            return str(configured_path)
+
+    for candidate in COMMON_CHROME_PATHS:
+        if Path(candidate).exists():
+            return candidate
+    return None
+
+
+def build_driver() -> WebDriver:
+    if SETTINGS.browser != "chrome":
+        raise ValueError(f"Unsupported browser '{SETTINGS.browser}'. Only chrome is configured.")
+
+    options = ChromeOptions()
+    chrome_binary = _resolve_chrome_binary()
+    if chrome_binary:
+        options.binary_location = chrome_binary
+
+    options.add_argument(f"--window-size={SETTINGS.window_size}")
+    options.add_argument("--disable-gpu")
+    options.add_argument("--disable-notifications")
+    options.add_argument("--disable-search-engine-choice-screen")
+    options.add_argument("--lang=en-US")
+    options.add_argument("--no-default-browser-check")
+    options.add_argument("--no-first-run")
+    options.add_argument("--remote-allow-origins=*")
+    if SETTINGS.headless:
+        options.add_argument("--headless=new")
+
+    driver = webdriver.Chrome(options=options)
+    driver.set_page_load_timeout(SETTINGS.page_load_timeout)
+    return driver
