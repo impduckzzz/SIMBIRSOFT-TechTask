@@ -16,6 +16,7 @@ COMMON_CHROME_PATHS = (
 
 
 def _resolve_chrome_binary() -> str | None:
+    """Возвращает корректный путь к Chrome из настроек или стандартных директорий установки."""
     if SETTINGS.chrome_binary:
         configured_path = Path(SETTINGS.chrome_binary)
         if configured_path.exists():
@@ -28,6 +29,7 @@ def _resolve_chrome_binary() -> str | None:
 
 
 def build_driver() -> WebDriver:
+    """Создаёт и настраивает экземпляр Chrome WebDriver для UI-тестов."""
     if SETTINGS.browser != "chrome":
         raise ValueError(f"Unsupported browser '{SETTINGS.browser}'. Only chrome is configured.")
 

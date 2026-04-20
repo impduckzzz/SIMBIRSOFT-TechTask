@@ -9,35 +9,50 @@ from config.settings import SETTINGS
 
 
 class WaitHelper:
-    def __init__(self, driver: WebDriver, timeout: int | None = None) -> None:
+    """Инкапсулирует явные ожидания, используемые в page object'ах."""
+
+    def __init__(self, driver: WebDriver, timeout: int = SETTINGS.explicit_wait) -> None:
         self.driver = driver
-        self.timeout = timeout or SETTINGS.explicit_wait
+        self.timeout = timeout
 
     def until(self, condition, message: str | None = None):
+        """Ждёт, пока не выполнится произвольное условие."""
         return WebDriverWait(self.driver, self.timeout).until(condition, message)
 
     def visible(self, locator: tuple[str, str]) -> WebElement:
+        """Ждёт, пока элемент станет видимым."""
         return self.until(ec.visibility_of_element_located(locator))
 
     def present(self, locator: tuple[str, str]) -> WebElement:
+        """Ждёт, пока элемент появится в DOM."""
         return self.until(ec.presence_of_element_located(locator))
 
+    def all_present(self, locator: tuple[str, str]) -> list[WebElement]:
+        """Ждёт, пока в DOM появится хотя бы один подходящий элемент."""
+        return self.until(ec.presence_of_all_elements_located(locator))
+
     def clickable(self, locator: tuple[str, str]) -> WebElement:
+        """Ждёт, пока элемент станет кликабельным."""
         return self.until(ec.element_to_be_clickable(locator))
 
     def all_visible(self, locator: tuple[str, str]) -> list[WebElement]:
+        """Ждёт, пока все найденные элементы станут видимыми."""
         return self.until(ec.visibility_of_all_elements_located(locator))
 
     def url_contains(self, value: str) -> bool:
+        """Ждёт, пока текущий url не начнёт содержать ожидаемый фрагмент."""
         return self.until(ec.url_contains(value))
 
     def staleness(self, element: WebElement) -> bool:
+        """Ждёт, пока переданный элемент не станет устаревшим."""
         return self.until(ec.staleness_of(element))
 
     def text_present(self, locator: tuple[str, str], value: str) -> bool:
+        """Ждёт, пока внутри элемента не появится указанный текст."""
         return self.until(ec.text_to_be_present_in_element(locator, value))
 
     def document_ready(self) -> bool:
+        """Ждёт, пока document.readyState не станет complete."""
         return self.until(
             lambda driver: driver.execute_script("return document.readyState") == "complete"
         )

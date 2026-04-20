@@ -5,6 +5,7 @@
 __pycache__/
 allure-report/
 allure-results/
+artifacts/
 build/
 chromedriver*.exe
 coverage.xml

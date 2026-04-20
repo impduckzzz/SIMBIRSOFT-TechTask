@@ -10,8 +10,8 @@ import pytest
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from config.settings import SETTINGS
-from framework.driver_factory import build_driver
 from pages.cart_page import CartPage
+from src.driver_utils import build_driver
 
 
 @pytest.fixture()

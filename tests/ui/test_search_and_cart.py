@@ -10,21 +10,26 @@ from config.test_data import (
     SEARCH_RESULT_POSITIONS,
     get_preferred_option_fragments,
 )
-from framework.utils import sum_money
 from pages.cart_page import CartPage
 from pages.home_page import HomePage
 from pages.product_page import ProductPage
+from src.utils import sum_money
 
 
 @allure.epic("Automation Test Store")
 @allure.feature("Search and cart")
 @allure.story("Search results")
 @allure.title("Search results can be added to cart, the cheapest item can be doubled and totals remain correct")
+@allure.description(
+    "Поиск по ключевому слову shirt, сортировка результатов по имени, добавление второго и "
+    "третьего товара в корзину со случайным количеством, удвоение количества самого дешевого "
+    "товара и проверка итоговых сумм."
+)
 @pytest.mark.ui
 def test_search_results_cart_total(driver, clean_cart, randomizer_factory):
     rng = randomizer_factory(offset=20)
 
-    with allure.step("Search by keyword and sort results by product name"):
+    with allure.step("Найти товары по запросу shirt и отсортировать выдачу по имени"):
         home_page = HomePage(driver).open()
         search_results = home_page.search_for(SEARCH_KEYWORD)
         search_results.sort_by_visible_text("Name A - Z")
@@ -37,21 +42,22 @@ def test_search_results_cart_total(driver, clean_cart, randomizer_factory):
         for product in selected_products
     }
 
-    with allure.step("Open the second and third products and add them with random quantities"):
+    with allure.step("Добавить второй и третий товар из выдачи со случайным количеством"):
         for product in selected_products:
-                ProductPage(driver).open_by_url(product.url).configure_and_add_to_cart(
-                    quantity=selected_quantities[product.name],
-                    preferred_option_fragments=get_preferred_option_fragments(product.name),
-                )
+            ProductPage(driver).open_by_url(product.url).configure_and_add_to_cart(
+                quantity=selected_quantities[product.name],
+                preferred_option_fragments=get_preferred_option_fragments(product.name),
+            )
 
-    cart_page = CartPage(driver).open()
-    cart_items = cart_page.get_items()
-    assert len(cart_items) == 2
-    assert {item.name.casefold() for item in cart_items} == {
-        product.name.casefold() for product in selected_products
-    }
+    with allure.step("Убедиться, что в корзине находятся оба выбранных товара"):
+        cart_page = CartPage(driver).open()
+        cart_items = cart_page.get_items()
+        assert len(cart_items) == 2
+        assert {item.name.casefold() for item in cart_items} == {
+            product.name.casefold() for product in selected_products
+        }
 
-    with allure.step("Find the cheapest product in cart and double its quantity"):
+    with allure.step("Найти самый дешевый товар и удвоить его количество"):
         cheapest_item = cart_page.get_cheapest_item()
         cart_page.update_item_quantity(cheapest_item.quantity_input_id, cheapest_item.quantity * 2)
         updated_items = cart_page.get_items()
@@ -60,7 +66,7 @@ def test_search_results_cart_total(driver, clean_cart, randomizer_factory):
         )
         assert updated_cheapest.quantity == cheapest_item.quantity * 2
 
-    with allure.step("Validate cart subtotal and total"):
+    with allure.step("Проверить subtotal и total после обновления корзины"):
         summary = cart_page.get_summary()
         assert summary.subtotal == sum_money(item.total_price for item in updated_items)
         assert summary.total == summary.subtotal + summary.adjustments

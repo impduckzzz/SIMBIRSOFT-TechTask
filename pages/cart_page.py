@@ -2,11 +2,12 @@ from __future__ import annotations
 
 from decimal import Decimal
 
+import allure
 from selenium.webdriver.common.by import By
 
-from framework.base_page import BasePage
-from framework.models import CartItem, CartSummary
-from framework.utils import MONEY_ZERO, normalize_space, parse_money, sum_money
+from pages.base_page import BasePage
+from src.models import CartItem, CartSummary
+from src.utils import MONEY_ZERO, normalize_space, parse_money, sum_money
 
 
 class CartPage(BasePage):
@@ -18,10 +19,14 @@ class CartPage(BasePage):
     UPDATE_BUTTON = (By.ID, "cart_update")
     TOTALS_TABLE = (By.ID, "totals_table")
 
+    @allure.step("Check whether the cart is empty")
     def is_empty(self) -> bool:
+        """Returns True when the cart page contains the empty cart message."""
         return "Your shopping cart is empty!" in self.driver.page_source
 
+    @allure.step("Clear cart content")
     def clear(self) -> None:
+        """Removes all items from the cart one by one."""
         self.open()
         while not self.is_empty():
             remove_links = [link.get_attribute("href") for link in self.find_all(self.REMOVE_LINKS)]
@@ -30,7 +35,9 @@ class CartPage(BasePage):
             self.driver.get(remove_links[0])
             self.wait_until_ready()
 
+    @allure.step("Read current cart items")
     def get_items(self) -> list[CartItem]:
+        """Parses all product rows from the cart table into structured models."""
         if self.is_empty():
             return []
 
@@ -58,7 +65,9 @@ class CartPage(BasePage):
             )
         return items
 
+    @allure.step("Update cart item quantity to {quantity}")
     def update_item_quantity(self, quantity_input_id: str, quantity: int):
+        """Changes quantity for a specific cart row and applies the update."""
         quantity_input = self.driver.find_element(By.ID, quantity_input_id)
         self.replace_value(quantity_input, quantity)
         update_button = self.find(self.UPDATE_BUTTON)
@@ -67,7 +76,9 @@ class CartPage(BasePage):
         self.wait_until_ready()
         return self
 
+    @allure.step("Remove cart items by positions: {positions}")
     def remove_items_by_positions(self, positions: list[int]):
+        """Removes cart rows by their one-based position in the items table."""
         items = self.get_items()
         remove_urls = [item.remove_url for index, item in enumerate(items, start=1) if index in positions]
         for remove_url in remove_urls:
@@ -75,19 +86,25 @@ class CartPage(BasePage):
             self.wait_until_ready()
         return self
 
+    @allure.step("Find the cheapest cart item")
     def get_cheapest_item(self) -> CartItem:
+        """Returns the cart item with the minimal unit price."""
         items = self.get_items()
         if not items:
             raise AssertionError("Cart is empty.")
         return min(items, key=lambda item: item.unit_price)
 
+    @allure.step("Read cart summary values")
     def get_summary(self) -> CartSummary:
+        """Builds subtotal, adjustments and total values from the totals table."""
         if self.is_empty():
             return CartSummary(subtotal=MONEY_ZERO, adjustments=MONEY_ZERO, total=MONEY_ZERO, breakdown={})
 
         breakdown: dict[str, Decimal] = {}
         for row in self.find(self.TOTALS_TABLE).find_elements(By.CSS_SELECTOR, "tbody tr"):
             cells = row.find_elements(By.TAG_NAME, "td")
+            if len(cells) < 2:
+                continue
             label = normalize_space(cells[0].text).rstrip(":")
             amount = parse_money(cells[1].text)
             breakdown[label] = amount
