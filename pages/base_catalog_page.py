@@ -13,9 +13,9 @@ class BaseCatalogPage(BasePage):
     SORT_DROPDOWN = (By.CSS_SELECTOR, "select[name='sort']")
     PRODUCT_NAME_LINKS = (By.CSS_SELECTOR, ".thumbnails .fixed_wrapper .prdocutname")
 
-    @allure.step("Sort catalog items by: {value}")
+    @allure.step("Отсортировать товары в каталоге по: {value}")
     def sort_by_visible_text(self, value: str):
-        """Applies a sorting option and waits until the catalog is refreshed."""
+        """Применяет вариант сортировки и дожидается обновления каталога."""
         current_marker = self.get_product_link_elements()[0]
         Select(self.find(self.SORT_DROPDOWN)).select_by_visible_text(value)
         self.waits.staleness(current_marker)
@@ -23,12 +23,12 @@ class BaseCatalogPage(BasePage):
         return self
 
     def get_product_link_elements(self):
-        """Returns only product links that have a visible non-empty title."""
+        """Возвращает только ссылки на товары с видимым непустым названием."""
         return [element for element in self.find_all(self.PRODUCT_NAME_LINKS) if element.text.strip()]
 
-    @allure.step("Collect products from the catalog page")
+    @allure.step("Собрать товары со страницы каталога")
     def get_products(self) -> list[ProductCard]:
-        """Builds a list of product cards with their name, price and url."""
+        """Формирует список карточек товаров с названием, ценой и ссылкой."""
         products: list[ProductCard] = []
         for link in self.get_product_link_elements():
             card = link.find_element(By.XPATH, "./ancestor::div[contains(@class,'col-md-3')]")

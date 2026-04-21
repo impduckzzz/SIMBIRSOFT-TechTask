@@ -40,7 +40,7 @@ def driver(request):
 @pytest.fixture()
 def clean_cart(driver):
     cart_page = CartPage(driver)
-    cart_page.clear()
+    cart_page.clear_cart()
     yield cart_page
 
 

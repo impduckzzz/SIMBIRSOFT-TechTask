@@ -17,18 +17,18 @@ class HomePage(BasePage):
     SEARCH_BUTTON = (By.CSS_SELECTOR, ".button-in-search")
     PRODUCT_NAME_LINKS = (By.CSS_SELECTOR, ".prdocutname")
 
-    @allure.step("Search products by keyword: {keyword}")
+    @allure.step("Найти товары по запросу: {keyword}")
     def search_for(self, keyword: str):
-        """Searches the store and returns the search results page object."""
+        """Выполняет поиск по магазину и возвращает объект страницы с результатами."""
         from pages.search_results_page import SearchResultsPage
 
-        self.type(self.SEARCH_INPUT, keyword)
+        self.enter_text(self.SEARCH_INPUT, keyword)
         self.click(self.SEARCH_BUTTON)
         return SearchResultsPage(self.driver)
 
-    @allure.step("Collect unique products from the home page")
+    @allure.step("Собрать уникальные товары с главной страницы")
     def get_unique_home_products(self) -> list[ProductCard]:
-        """Collects unique product tiles from the home page by their url."""
+        """Собирает уникальные карточки товаров с главной страницы по их url."""
         products = []
         for link in self.find_all(self.PRODUCT_NAME_LINKS):
             name = normalize_space(link.text)
@@ -40,9 +40,9 @@ class HomePage(BasePage):
             products.append(ProductCard(name=name, price=price, url=href))
         return unique_by_url(products, lambda product: product.url)
 
-    @allure.step("Pick {count} random products from the home page")
+    @allure.step("Выбрать {count} случайных товаров с главной страницы")
     def pick_random_products(self, count: int, rng: random.Random) -> list[ProductCard]:
-        """Returns a reproducible random subset of unique home page products."""
+        """Возвращает воспроизводимую случайную выборку уникальных товаров с главной страницы."""
         products = self.get_unique_home_products()
         if len(products) < count:
             raise AssertionError(f"Expected at least {count} unique home page products, got {len(products)}.")

@@ -7,6 +7,11 @@ from config.test_data import CATEGORY_PATH
 from pages.category_page import CategoryPage
 
 
+@pytest.fixture()
+def category_page(driver) -> CategoryPage:
+    return CategoryPage(driver).open_category(CATEGORY_PATH)
+
+
 @allure.epic("Automation Test Store")
 @allure.feature("Catalog")
 @allure.story("Category sorting")
@@ -16,9 +21,7 @@ from pages.category_page import CategoryPage
     "в обоих направлениях."
 )
 @pytest.mark.ui
-def test_category_products_are_sorted_by_name_and_price(driver):
-    category_page = CategoryPage(driver).open_category(CATEGORY_PATH)
-
+def test_category_products_are_sorted_by_name_and_price(category_page: CategoryPage):
     with allure.step("Убедиться, что в категории есть минимум четыре товара"):
         products = category_page.get_products()
         assert len(products) >= 4, "The chosen category should contain at least four products."

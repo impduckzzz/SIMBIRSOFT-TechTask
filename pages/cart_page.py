@@ -19,26 +19,26 @@ class CartPage(BasePage):
     UPDATE_BUTTON = (By.ID, "cart_update")
     TOTALS_TABLE = (By.ID, "totals_table")
 
-    @allure.step("Check whether the cart is empty")
-    def is_empty(self) -> bool:
-        """Returns True when the cart page contains the empty cart message."""
+    @allure.step("Проверить, что корзина пуста")
+    def is_cart_empty(self) -> bool:
+        """Возвращает True, если на странице корзины показано сообщение о пустой корзине."""
         return "Your shopping cart is empty!" in self.driver.page_source
 
-    @allure.step("Clear cart content")
-    def clear(self) -> None:
-        """Removes all items from the cart one by one."""
+    @allure.step("Очистить содержимое корзины")
+    def clear_cart(self) -> None:
+        """Удаляет все товары из корзины по одному."""
         self.open()
-        while not self.is_empty():
+        while not self.is_cart_empty():
             remove_links = [link.get_attribute("href") for link in self.find_all(self.REMOVE_LINKS)]
             if not remove_links:
                 break
             self.driver.get(remove_links[0])
             self.wait_until_ready()
 
-    @allure.step("Read current cart items")
+    @allure.step("Прочитать текущие товары в корзине")
     def get_items(self) -> list[CartItem]:
-        """Parses all product rows from the cart table into structured models."""
-        if self.is_empty():
+        """Преобразует все строки товаров из таблицы корзины в структурированные модели."""
+        if self.is_cart_empty():
             return []
 
         rows = [
@@ -65,9 +65,9 @@ class CartPage(BasePage):
             )
         return items
 
-    @allure.step("Update cart item quantity to {quantity}")
+    @allure.step("Изменить количество товара в корзине на {quantity}")
     def update_item_quantity(self, quantity_input_id: str, quantity: int):
-        """Changes quantity for a specific cart row and applies the update."""
+        """Меняет количество для конкретной строки корзины и применяет обновление."""
         quantity_input = self.driver.find_element(By.ID, quantity_input_id)
         self.replace_value(quantity_input, quantity)
         update_button = self.find(self.UPDATE_BUTTON)
@@ -76,9 +76,9 @@ class CartPage(BasePage):
         self.wait_until_ready()
         return self
 
-    @allure.step("Remove cart items by positions: {positions}")
+    @allure.step("Удалить товары из корзины по позициям: {positions}")
     def remove_items_by_positions(self, positions: list[int]):
-        """Removes cart rows by their one-based position in the items table."""
+        """Удаляет строки корзины по их позиции в таблице, начиная с единицы."""
         items = self.get_items()
         remove_urls = [item.remove_url for index, item in enumerate(items, start=1) if index in positions]
         for remove_url in remove_urls:
@@ -86,18 +86,18 @@ class CartPage(BasePage):
             self.wait_until_ready()
         return self
 
-    @allure.step("Find the cheapest cart item")
+    @allure.step("Найти самый дешёвый товар в корзине")
     def get_cheapest_item(self) -> CartItem:
-        """Returns the cart item with the minimal unit price."""
+        """Возвращает товар из корзины с минимальной ценой за единицу."""
         items = self.get_items()
         if not items:
             raise AssertionError("Cart is empty.")
         return min(items, key=lambda item: item.unit_price)
 
-    @allure.step("Read cart summary values")
+    @allure.step("Прочитать итоговые значения корзины")
     def get_summary(self) -> CartSummary:
-        """Builds subtotal, adjustments and total values from the totals table."""
-        if self.is_empty():
+        """Формирует значения subtotal, adjustments и total из таблицы итогов."""
+        if self.is_cart_empty():
             return CartSummary(subtotal=MONEY_ZERO, adjustments=MONEY_ZERO, total=MONEY_ZERO, breakdown={})
 
         breakdown: dict[str, Decimal] = {}

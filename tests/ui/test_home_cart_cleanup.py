@@ -18,7 +18,7 @@ from src.utils import sum_money
 @allure.epic("Automation Test Store")
 @allure.feature("Cart")
 @allure.story("Home page products")
-@allure.title("Random home page products can be added, even positions removed and totals recalculated")
+@allure.title("Случайные товары с главной страницы можно добавить, удалить чётные позиции и пересчитать итоговые суммы")
 @allure.description(
     "Добавление пяти случайных товаров с главной страницы в корзину со случайным количеством, "
     "удаление товаров на четных позициях и проверка итоговых сумм."

@@ -9,22 +9,18 @@ from selenium.webdriver.remote.webdriver import WebDriver
 from config.settings import SETTINGS
 
 
-COMMON_CHROME_PATHS = (
-    r"C:\Program Files\Google\Chrome\Application\chrome.exe",
-    r"C:\Program Files (x86)\Google\Chrome\Application\chrome.exe",
-)
-
-
 def _resolve_chrome_binary() -> str | None:
-    """Возвращает корректный путь к Chrome из настроек или стандартных директорий установки."""
+    """Возвращает путь к Chrome из настроек, если он задан и существует."""
     if SETTINGS.chrome_binary:
         configured_path = Path(SETTINGS.chrome_binary)
         if configured_path.exists():
             return str(configured_path)
 
-    for candidate in COMMON_CHROME_PATHS:
-        if Path(candidate).exists():
-            return candidate
+    for candidate in SETTINGS.chrome_binary_candidates:
+        candidate_path = Path(candidate)
+        if candidate_path.exists():
+            return str(candidate_path)
+
     return None
 
 

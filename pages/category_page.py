@@ -6,8 +6,8 @@ from pages.base_catalog_page import BaseCatalogPage
 
 
 class CategoryPage(BaseCatalogPage):
-    @allure.step("Open category by path: {path}")
+    @allure.step("Открыть категорию по пути: {path}")
     def open_category(self, path: str):
-        """Opens a specific category page by its path id."""
+        """Открывает страницу конкретной категории по её значению path."""
         self.open(f"index.php?rt=product/category&path={path}")
         return self

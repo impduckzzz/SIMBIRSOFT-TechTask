@@ -9,7 +9,7 @@ from selenium.webdriver.remote.webelement import WebElement
 from selenium.webdriver.support.ui import Select
 
 from config.settings import SETTINGS
-from src.wait_helper import WaitHelper
+from src.wait_helper import Locator, WaitHelper
 
 
 class BasePage:
@@ -21,38 +21,43 @@ class BasePage:
 
     @allure.step("Открыть страницу: {relative_url}")
     def open(self, relative_url: str | None = None):
-        """Открывает либо url страницы по умолчанию, либо переданный относительный путь."""
-        target = urljoin(SETTINGS.base_url, relative_url or self.relative_url)
-        self.driver.get(target)
+        """Открывает либо URL страницы по умолчанию, либо переданный относительный путь."""
+        url = self.relative_url if relative_url is None else relative_url
+        if url:
+            url = urljoin(SETTINGS.base_url, url)
+        else:
+            url = SETTINGS.base_url
+
+        self.driver.get(url)
         self.wait_until_ready()
         return self
 
-    @allure.step("Дождаться полной загрузки страницы")
+    @allure.step("Дождаться готовности документа")
     def wait_until_ready(self) -> None:
-        """Ждёт, пока браузер сообщит о полной готовности документа."""
+        """Ждёт, пока `document.readyState` не станет `complete`."""
         self.waits.document_ready()
 
     @allure.step("Найти видимый элемент по локатору: {locator}")
-    def find(self, locator: tuple[str, str]) -> WebElement:
+    def find(self, locator: Locator) -> WebElement:
         """Находит видимый элемент на странице."""
         return self.waits.visible(locator)
 
     @allure.step("Найти все элементы по локатору: {locator}")
-    def find_all(self, locator: tuple[str, str]) -> list[WebElement]:
-        """Ждёт готовности страницы и затем возвращает все найденные элементы, включая пустой список."""
+    def find_all(self, locator: Locator) -> list[WebElement]:
+        """Ждёт готовности документа и затем возвращает все найденные элементы, включая пустой список."""
         self.waits.document_ready()
         return self.driver.find_elements(*locator)
 
     @allure.step("Кликнуть по элементу: {locator}")
-    def click(self, locator: tuple[str, str]) -> WebElement:
+    def click(self, locator: Locator) -> WebElement:
         """Ждёт кликабельности элемента и выполняет клик."""
         element = self.waits.clickable(locator)
         element.click()
         return element
 
-    @allure.step("Ввести '{value}' в элемент: {locator}")
-    def type(self, locator: tuple[str, str], value: str, clear: bool = True) -> WebElement:
-        """Вводит значение в поле и при необходимости предварительно очищает его."""
+    @allure.step("Ввести текст '{value}' в поле: {locator}")
+    def enter_text(self, locator: Locator, value: str, clear: bool = True) -> WebElement:
+        """Вводит текст в поле и при необходимости предварительно очищает его."""
         element = self.find(locator)
         if clear:
             element.clear()
@@ -75,7 +80,7 @@ class BasePage:
         )
 
     @allure.step("Выбрать '{value}' в выпадающем списке: {locator}")
-    def select_by_visible_text(self, locator: tuple[str, str], value: str) -> str:
+    def select_by_visible_text(self, locator: Locator, value: str) -> str:
         """Выбирает значение в выпадающем списке по видимому тексту."""
         select = Select(self.find(locator))
         select.select_by_visible_text(value)
