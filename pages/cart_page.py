@@ -3,6 +3,7 @@ from __future__ import annotations
 from decimal import Decimal
 
 import allure
+from selenium.common.exceptions import StaleElementReferenceException
 from selenium.webdriver.common.by import By
 
 from pages.base_page import BasePage
@@ -40,30 +41,40 @@ class CartPage(BasePage):
         """Преобразует все строки товаров из таблицы корзины в структурированные модели."""
         if self.is_cart_empty():
             return []
+        last_error: StaleElementReferenceException | None = None
+        for _ in range(3):
+            try:
+                self.find(self.CART_TABLE)
+                rows = [
+                    row
+                    for row in self.find_all(self.CART_ROWS)
+                    if len(row.find_elements(By.TAG_NAME, "td")) >= 7
+                ]
+                items: list[CartItem] = []
+                for row in rows:
+                    cells = row.find_elements(By.TAG_NAME, "td")
+                    quantity_input = cells[4].find_element(By.TAG_NAME, "input")
+                    items.append(
+                        CartItem(
+                            name=normalize_space(cells[1].find_element(By.TAG_NAME, "a").text),
+                            unit_price=parse_money(cells[3].text),
+                            quantity=int(quantity_input.get_attribute("value")),
+                            total_price=parse_money(cells[5].text),
+                            quantity_input_id=quantity_input.get_attribute("id"),
+                            remove_url=cells[6].find_element(By.TAG_NAME, "a").get_attribute("href"),
+                            options=tuple(
+                                normalize_space(option.text) for option in cells[1].find_elements(By.TAG_NAME, "small")
+                            ),
+                        )
+                    )
+                return items
+            except StaleElementReferenceException as error:
+                last_error = error
+                self.wait_until_ready()
 
-        rows = [
-            row
-            for row in self.find_all(self.CART_ROWS)
-            if len(row.find_elements(By.TAG_NAME, "td")) >= 7
-        ]
-        items: list[CartItem] = []
-        for row in rows:
-            cells = row.find_elements(By.TAG_NAME, "td")
-            quantity_input = cells[4].find_element(By.TAG_NAME, "input")
-            items.append(
-                CartItem(
-                    name=normalize_space(cells[1].find_element(By.TAG_NAME, "a").text),
-                    unit_price=parse_money(cells[3].text),
-                    quantity=int(quantity_input.get_attribute("value")),
-                    total_price=parse_money(cells[5].text),
-                    quantity_input_id=quantity_input.get_attribute("id"),
-                    remove_url=cells[6].find_element(By.TAG_NAME, "a").get_attribute("href"),
-                    options=tuple(
-                        normalize_space(option.text) for option in cells[1].find_elements(By.TAG_NAME, "small")
-                    ),
-                )
-            )
-        return items
+        if last_error is not None:
+            raise last_error
+        return []
 
     @allure.step("Изменить количество товара в корзине на {quantity}")
     def update_item_quantity(self, quantity_input_id: str, quantity: int):

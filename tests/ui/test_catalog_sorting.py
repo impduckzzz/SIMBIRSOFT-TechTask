@@ -3,19 +3,13 @@ from __future__ import annotations
 import allure
 import pytest
 
-from config.test_data import CATEGORY_PATH
 from pages.category_page import CategoryPage
-
-
-@pytest.fixture()
-def category_page(driver) -> CategoryPage:
-    return CategoryPage(driver).open_category(CATEGORY_PATH)
 
 
 @allure.epic("Automation Test Store")
 @allure.feature("Catalog")
 @allure.story("Category sorting")
-@allure.title("Category products can be sorted by name and price in both directions")
+@allure.title("Товары категории можно сортировать по имени и цене в обоих направлениях")
 @allure.description(
     "Проверка сортировки товаров в категории Apparel & Accessories по имени и цене "
     "в обоих направлениях."

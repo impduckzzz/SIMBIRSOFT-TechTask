@@ -19,18 +19,17 @@ from src.utils import sum_money
 @allure.epic("Automation Test Store")
 @allure.feature("Search and cart")
 @allure.story("Search results")
-@allure.title("Search results can be added to cart, the cheapest item can be doubled and totals remain correct")
+@allure.title("Результаты поиска можно добавить в корзину, удвоить количество самого дешёвого товара и сохранить корректные суммы")
 @allure.description(
     "Поиск по ключевому слову shirt, сортировка результатов по имени, добавление второго и "
-    "третьего товара в корзину со случайным количеством, удвоение количества самого дешевого "
+    "третьего товара в корзину со случайным количеством, удвоение количества самого дешёвого "
     "товара и проверка итоговых сумм."
 )
 @pytest.mark.ui
-def test_search_results_cart_total(driver, clean_cart, randomizer_factory):
+def test_search_results_cart_total(driver, home_page: HomePage, clean_cart, randomizer_factory):
     rng = randomizer_factory(offset=20)
 
     with allure.step("Найти товары по запросу shirt и отсортировать выдачу по имени"):
-        home_page = HomePage(driver).open()
         search_results = home_page.search_for(SEARCH_KEYWORD)
         search_results.sort_by_visible_text("Name A - Z")
         products = search_results.get_products()
@@ -57,7 +56,7 @@ def test_search_results_cart_total(driver, clean_cart, randomizer_factory):
             product.name.casefold() for product in selected_products
         }
 
-    with allure.step("Найти самый дешевый товар и удвоить его количество"):
+    with allure.step("Найти самый дешёвый товар и удвоить его количество"):
         cheapest_item = cart_page.get_cheapest_item()
         cart_page.update_item_quantity(cheapest_item.quantity_input_id, cheapest_item.quantity * 2)
         updated_items = cart_page.get_items()

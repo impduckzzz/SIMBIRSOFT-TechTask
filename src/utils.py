@@ -1,7 +1,8 @@
 from __future__ import annotations
 
+from collections.abc import Callable, Iterable
 from decimal import Decimal
-from typing import Iterable, TypeVar
+from typing import TypeVar
 
 
 MONEY_ZERO = Decimal("0.00")
@@ -29,8 +30,13 @@ def sum_money(values: Iterable[Decimal]) -> Decimal:
     return sum(values, start=MONEY_ZERO).quantize(Decimal("0.01"))
 
 
-def unique_by_url(items: Iterable[T], get_url) -> list[T]:
-    """Оставляет только первый объект для каждого уникального непустого url."""
+def unique_by_url(items: Iterable[T], get_url: Callable[[T], str]) -> list[T]:
+    """Оставляет только первый объект для каждого уникального непустого URL.
+
+    Args:
+        items: Последовательность объектов, среди которых нужно убрать дубликаты.
+        get_url: Функция, которая извлекает URL из каждого объекта.
+    """
     seen: set[str] = set()
     result: list[T] = []
     for item in items:

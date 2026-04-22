@@ -22,12 +22,8 @@ class BasePage:
     @allure.step("Открыть страницу: {relative_url}")
     def open(self, relative_url: str | None = None):
         """Открывает либо URL страницы по умолчанию, либо переданный относительный путь."""
-        url = self.relative_url if relative_url is None else relative_url
-        if url:
-            url = urljoin(SETTINGS.base_url, url)
-        else:
-            url = SETTINGS.base_url
-
+        relative_url = self.relative_url if relative_url is None else relative_url
+        url = urljoin(SETTINGS.base_url, relative_url) if relative_url else SETTINGS.base_url
         self.driver.get(url)
         self.wait_until_ready()
         return self

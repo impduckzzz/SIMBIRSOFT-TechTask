@@ -21,14 +21,13 @@ from src.utils import sum_money
 @allure.title("Случайные товары с главной страницы можно добавить, удалить чётные позиции и пересчитать итоговые суммы")
 @allure.description(
     "Добавление пяти случайных товаров с главной страницы в корзину со случайным количеством, "
-    "удаление товаров на четных позициях и проверка итоговых сумм."
+    "удаление товаров на чётных позициях и проверка итоговых сумм."
 )
 @pytest.mark.ui
-def test_home_page_cart_cleanup(driver, clean_cart, randomizer_factory):
+def test_home_page_cart_cleanup(driver, home_page: HomePage, clean_cart, randomizer_factory):
     rng = randomizer_factory(offset=30)
 
     with allure.step("Выбрать пять случайных уникальных товаров с главной страницы"):
-        home_page = HomePage(driver).open()
         selected_products = home_page.pick_random_products(HOME_PAGE_PRODUCTS_TO_ADD, rng)
         assert len(selected_products) == HOME_PAGE_PRODUCTS_TO_ADD
 
@@ -47,7 +46,7 @@ def test_home_page_cart_cleanup(driver, clean_cart, randomizer_factory):
         items_before_removal = cart_page.get_items()
         assert len(items_before_removal) == HOME_PAGE_PRODUCTS_TO_ADD
 
-    with allure.step("Удалить товары на четных позициях в таблице корзины"):
+    with allure.step("Удалить товары на чётных позициях в таблице корзины"):
         even_positions = [index for index in range(1, len(items_before_removal) + 1) if index % 2 == 0]
         expected_remaining_names = [
             item.name for index, item in enumerate(items_before_removal, start=1) if index % 2 != 0
@@ -56,7 +55,7 @@ def test_home_page_cart_cleanup(driver, clean_cart, randomizer_factory):
         items_after_removal = cart_page.get_items()
         assert [item.name for item in items_after_removal] == expected_remaining_names
 
-    with allure.step("Проверить subtotal и total после удаления четных позиций"):
+    with allure.step("Проверить subtotal и total после удаления чётных позиций"):
         summary = cart_page.get_summary()
         assert summary.subtotal == sum_money(item.total_price for item in items_after_removal)
         assert summary.total == summary.subtotal + summary.adjustments

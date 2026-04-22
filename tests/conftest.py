@@ -10,7 +10,10 @@ import pytest
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from config.settings import SETTINGS
+from config.test_data import CATEGORY_PATH
 from pages.cart_page import CartPage
+from pages.category_page import CategoryPage
+from pages.home_page import HomePage
 from src.driver_utils import build_driver
 
 
@@ -35,6 +38,16 @@ def driver(request):
             attachment_type=allure.attachment_type.TEXT,
         )
     web_driver.quit()
+
+
+@pytest.fixture()
+def home_page(driver, clean_cart) -> HomePage:
+    return HomePage(driver).open()
+
+
+@pytest.fixture()
+def category_page(driver) -> CategoryPage:
+    return CategoryPage(driver).open_category(CATEGORY_PATH)
 
 
 @pytest.fixture()
