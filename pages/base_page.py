@@ -2,46 +2,82 @@ from __future__ import annotations
 
 from urllib.parse import urljoin
 
-from selenium.common.exceptions import TimeoutException
-from selenium.webdriver.common.alert import Alert
-from selenium.webdriver.support import expected_conditions as ec
-from selenium.webdriver.support.ui import WebDriverWait
+import allure
+from selenium.webdriver.common.keys import Keys
+from selenium.webdriver.remote.webdriver import WebDriver
+from selenium.webdriver.remote.webelement import WebElement
+from selenium.webdriver.support.ui import Select
+
+from config.settings import SETTINGS
+from src.wait_helper import Locator, WaitHelper
 
 
 class BasePage:
-    path = "/"
+    relative_url = ""
 
-    def __init__(self, driver, base_url: str, timeout: int = 10):
+    def __init__(self, driver: WebDriver) -> None:
         self.driver = driver
-        self.base_url = base_url
-        self.timeout = timeout
-        self.wait = WebDriverWait(driver, timeout)
+        self.waits = WaitHelper(driver)
 
-    def open(self):
-        self.driver.get(urljoin(self.base_url, self.path))
+    @allure.step("Открыть страницу: {relative_url}")
+    def open(self, relative_url: str | None = None):
+        """Открывает либо URL страницы по умолчанию, либо переданный относительный путь."""
+        relative_url = self.relative_url if relative_url is None else relative_url
+        url = urljoin(SETTINGS.base_url, relative_url) if relative_url else SETTINGS.base_url
+        self.driver.get(url)
+        self.wait_until_ready()
         return self
 
-    def wait_for_visible(self, locator):
-        return self.wait.until(ec.visibility_of_element_located(locator))
+    @allure.step("Дождаться готовности документа")
+    def wait_until_ready(self) -> None:
+        """Ждёт, пока `document.readyState` не станет `complete`."""
+        self.waits.document_ready()
 
-    def wait_for_clickable(self, locator):
-        return self.wait.until(ec.element_to_be_clickable(locator))
+    @allure.step("Найти видимый элемент по локатору: {locator}")
+    def find(self, locator: Locator) -> WebElement:
+        """Находит видимый элемент на странице."""
+        return self.waits.visible(locator)
 
-    def wait_for_presence(self, locator):
-        return self.wait.until(ec.presence_of_element_located(locator))
+    @allure.step("Найти все элементы по локатору: {locator}")
+    def find_all(self, locator: Locator) -> list[WebElement]:
+        """Ждёт готовности документа и затем возвращает все найденные элементы, включая пустой список."""
+        self.waits.document_ready()
+        return self.driver.find_elements(*locator)
 
-    def wait_for_alert(self) -> Alert:
-        return self.wait.until(ec.alert_is_present())
+    @allure.step("Кликнуть по элементу: {locator}")
+    def click(self, locator: Locator) -> WebElement:
+        """Ждёт кликабельности элемента и выполняет клик."""
+        element = self.waits.clickable(locator)
+        element.click()
+        return element
 
-    def is_alert_present(self, timeout: int = 2) -> bool:
-        try:
-            WebDriverWait(self.driver, timeout).until(ec.alert_is_present())
-            return True
-        except TimeoutException:
-            return False
+    @allure.step("Ввести текст '{value}' в поле: {locator}")
+    def enter_text(self, locator: Locator, value: str, clear: bool = True) -> WebElement:
+        """Вводит текст в поле и при необходимости предварительно очищает его."""
+        element = self.find(locator)
+        if clear:
+            element.clear()
+        element.send_keys(value)
+        return element
 
-    def validation_message(self, element) -> str:
-        return element.attribute("validationMessage")
+    @allure.step("Заменить значение элемента на: {value}")
+    def replace_value(self, element: WebElement, value: str | int) -> WebElement:
+        """Выделяет текущее значение в поле и заменяет его новым."""
+        element.send_keys(Keys.CONTROL, "a", Keys.DELETE)
+        element.send_keys(str(value))
+        return element
 
-    def take_screenshot(self) -> bytes:
-        return self.driver.get_screenshot_as_png()
+    @allure.step("Прокрутить страницу до элемента")
+    def scroll_into_view(self, element: WebElement) -> None:
+        """Прокручивает страницу так, чтобы элемент оказался по центру области просмотра."""
+        self.driver.execute_script(
+            "arguments[0].scrollIntoView({block: 'center', inline: 'nearest'});",
+            element,
+        )
+
+    @allure.step("Выбрать '{value}' в выпадающем списке: {locator}")
+    def select_by_visible_text(self, locator: Locator, value: str) -> str:
+        """Выбирает значение в выпадающем списке по видимому тексту."""
+        select = Select(self.find(locator))
+        select.select_by_visible_text(value)
+        return value

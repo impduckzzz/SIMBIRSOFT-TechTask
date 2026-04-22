@@ -1,1 +1,1 @@
-"""Page objects for UI automation."""
+"""Page Object Model classes."""
