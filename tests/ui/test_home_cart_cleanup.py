@@ -24,7 +24,13 @@ from src.utils import sum_money
     "удаление товаров на чётных позициях и проверка итоговых сумм."
 )
 @pytest.mark.ui
-def test_home_page_cart_cleanup(driver, home_page: HomePage, clean_cart, randomizer_factory):
+def test_home_page_cart_cleanup(
+    home_page: HomePage,
+    product_page: ProductPage,
+    cart_page: CartPage,
+    clean_cart,
+    randomizer_factory,
+):
     rng = randomizer_factory(offset=30)
 
     with allure.step("Выбрать пять случайных уникальных товаров с главной страницы"):
@@ -36,13 +42,13 @@ def test_home_page_cart_cleanup(driver, home_page: HomePage, clean_cart, randomi
         for product in selected_products:
             quantity = rng.randint(MIN_RANDOM_QUANTITY, MAX_RANDOM_QUANTITY)
             planned_quantities[product.name] = quantity
-            ProductPage(driver).open_by_url(product.url).configure_and_add_to_cart(
+            product_page.open_by_url(product.url).configure_and_add_to_cart(
                 quantity=quantity,
                 preferred_option_fragments=get_preferred_option_fragments(product.name),
             )
 
     with allure.step("Убедиться, что все пять товаров добавлены в корзину"):
-        cart_page = CartPage(driver).open()
+        cart_page.open()
         items_before_removal = cart_page.get_items()
         assert len(items_before_removal) == HOME_PAGE_PRODUCTS_TO_ADD
 

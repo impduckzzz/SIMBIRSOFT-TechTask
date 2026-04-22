@@ -26,7 +26,13 @@ from src.utils import sum_money
     "товара и проверка итоговых сумм."
 )
 @pytest.mark.ui
-def test_search_results_cart_total(driver, home_page: HomePage, clean_cart, randomizer_factory):
+def test_search_results_cart_total(
+    home_page: HomePage,
+    product_page: ProductPage,
+    cart_page: CartPage,
+    clean_cart,
+    randomizer_factory,
+):
     rng = randomizer_factory(offset=20)
 
     with allure.step("Найти товары по запросу shirt и отсортировать выдачу по имени"):
@@ -43,13 +49,13 @@ def test_search_results_cart_total(driver, home_page: HomePage, clean_cart, rand
 
     with allure.step("Добавить второй и третий товар из выдачи со случайным количеством"):
         for product in selected_products:
-            ProductPage(driver).open_by_url(product.url).configure_and_add_to_cart(
+            product_page.open_by_url(product.url).configure_and_add_to_cart(
                 quantity=selected_quantities[product.name],
                 preferred_option_fragments=get_preferred_option_fragments(product.name),
             )
 
     with allure.step("Убедиться, что в корзине находятся оба выбранных товара"):
-        cart_page = CartPage(driver).open()
+        cart_page.open()
         cart_items = cart_page.get_items()
         assert len(cart_items) == 2
         assert {item.name.casefold() for item in cart_items} == {

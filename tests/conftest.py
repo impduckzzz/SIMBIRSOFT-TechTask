@@ -14,6 +14,7 @@ from config.test_data import CATEGORY_PATH
 from pages.cart_page import CartPage
 from pages.category_page import CategoryPage
 from pages.home_page import HomePage
+from pages.product_page import ProductPage
 from src.driver_utils import build_driver
 
 
@@ -51,8 +52,17 @@ def category_page(driver) -> CategoryPage:
 
 
 @pytest.fixture()
-def clean_cart(driver):
-    cart_page = CartPage(driver)
+def cart_page(driver) -> CartPage:
+    return CartPage(driver)
+
+
+@pytest.fixture()
+def product_page(driver) -> ProductPage:
+    return ProductPage(driver)
+
+
+@pytest.fixture()
+def clean_cart(cart_page: CartPage):
     cart_page.clear_cart()
     yield cart_page
 
