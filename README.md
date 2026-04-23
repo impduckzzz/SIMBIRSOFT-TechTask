@@ -1,39 +1,28 @@
-# UI automation for practice-automation.com
+# Автотесты для SimbirSoft TechTask
 
-Проект реализует UI-автотесты на `Python + Selenium WebDriver + PyTest` для страницы [`Form Fields`](https://practice-automation.com/form-fields/) с запуском в `Google Chrome`.
+Проект на `Python` с двумя наборами автотестов:
 
-Требования ТЗ, которые покрыты в проекте:
+- UI-тесты для `https://automationteststore.com/`
+- API-тесты для локального сервиса из папки `test-service`
 
-- `Python` как основной язык.
-- `Chrome` как браузер для Selenium WebDriver.
-- `PyTest` как тестовый фреймворк.
-- Использование селекторов `ID`, `CSS` и `XPath`.
-- Паттерны `Page Object Model`, `Page Factory`, `Fluent Interface`.
-- Интеграция `Allure` через `allure-pytest`.
+## Стек
+
+- `Python 3.10+`
+- `pytest`
+- `Allure`
+- `pytest-xdist`
+- `Selenium WebDriver`
+- `requests`
+- `pydantic`
 
 ## Структура проекта
 
-```text
-.
-|-- framework/
-|   |-- elements.py
-|-- pages/
-|   |-- base_page.py
-|   |-- form_fields_page.py
-|-- tests/
-|   |-- test_form_fields.py
-|-- allure-results/
-|-- artifacts/
-|-- conftest.py
-|-- pytest.ini
-|-- requirements.txt
-```
-
-## Архитектура
-
-- `Page Object Model`: страница формы инкапсулирована в `FormFieldsPage`.
-- `Page Factory`: элементы страницы описаны как дескрипторы в `framework/elements.py` и лениво создаются при обращении.
-- `Fluent Interface`: методы страницы возвращают `self`, поэтому шаги теста можно вызывать цепочкой.
+- `config/` - настройки запуска и тестовые данные
+- `src/` - общие модели, клиенты, ожидания и вспомогательные утилиты
+- `pages/` - UI page object'ы
+- `tests/ui/` - UI-тесты
+- `tests/api/` - API-тесты
+- `test-service/` - локальный API-сервис для второго задания
 
 ## Установка
 
@@ -43,93 +32,79 @@ python -m venv .venv
 pip install -r requirements.txt
 ```
 
-Если Chrome установлен не в стандартное место, можно указать путь через переменную окружения:
+## Запуск UI-тестов
 
 ```bash
-set CHROME_BINARY=C:\Program Files\Google\Chrome\Application\chrome.exe
+pytest -m ui
 ```
 
-## Запуск тестов
+## Запуск API-тестов
 
-Обычный запуск:
+Перед запуском API-тестов нужно поднять сервис из папки `test-service`.
 
 ```bash
-python -m pytest
+pytest -m api
 ```
 
-Headless-режим:
+## Запуск всех тестов
 
 ```bash
-python -m pytest --headless
+pytest
 ```
 
-Запуск с сохранением результатов для Allure:
+## Параллельный запуск
 
 ```bash
-python -m pytest --headless --alluredir allure-results
+pytest -n auto
 ```
 
-Генерация HTML-отчёта Allure:
+Примеры:
 
 ```bash
+pytest -m ui -n auto
+pytest -m api -n auto
+```
+
+## Формирование результатов Allure
+
+```bash
+pytest --alluredir=allure-results
 allure serve allure-results
 ```
 
-## Автотесты
-
-- `test_submit_form_successfully`
-  Покрывает основной сценарий из ТЗ:
-  заполняет `Name`, `Password`, выбирает `Milk` и `Coffee`, выбирает `Yellow`, задаёт значение в `Do you like automation?`, заполняет `Email`, формирует `Message` на основе блока `Automation tools`, нажимает `Submit` и проверяет alert `Message received!`.
-
-- `test_name_is_required`
-  Негативный UI-сценарий:
-  форма отправляется без заполненного поля `Name`, после чего проверяется отсутствие alert и наличие стандартного браузерного сообщения валидации.
-
-## Тест-кейсы для README
-
-### Позитивный тест-кейс
-
-**Название:** Успешная отправка формы с корректно заполненными данными
-
-**Предусловия:** Открыт `https://practice-automation.com/form-fields/`
-
-**Шаги:**
-
-1. Ввести в поле `Name` валидное значение.
-2. Ввести значение в поле `Password`.
-3. Выбрать `Milk` и `Coffee`.
-4. Выбрать `Yellow`.
-5. В поле `Do you like automation?` выбрать любое значение, например `Yes`.
-6. В поле `Email` ввести `name@example.com`.
-7. В поле `Message` ввести: `Automation tools: 5. Longest tool name: Katalon Studio.`
-8. Нажать `Submit`.
-
-**Ожидаемый результат:** Появляется alert с текстом `Message received!`.
-
-### Негативный тест-кейс
-
-**Название:** Отправка формы без обязательного поля `Name`
-
-**Предусловия:** Открыт `https://practice-automation.com/form-fields/`
-
-**Шаги:**
-
-1. Оставить поле `Name` пустым.
-2. Заполнить остальные поля валидными значениями.
-3. Нажать `Submit`.
-
-**Ожидаемый результат:** Отправка не происходит, alert не появляется, браузер показывает сообщение валидации для обязательного поля `Name`.
-
-## Отчётность
-
-- Для сбора результатов используется `allure-pytest`.
-- При падении теста в отчёт прикладывается скриншот страницы.
-- В позитивном сценарии в отчёт также прикладывается скриншот заполненной формы перед отправкой.
-- В проект уже добавлен пример скриншота HTML-отчёта: `artifacts/allure-report.png`.
-
-Команды для повторной генерации отчёта:
+Примеры:
 
 ```bash
-python -m pytest --headless --alluredir allure-results
-allure serve allure-results
+pytest -m ui --alluredir=allure-results
+pytest -m api --alluredir=allure-results
 ```
+
+## Полезные переменные окружения
+
+### Для UI
+
+- `HEADLESS=true|false`
+- `CHROME_BINARY=C:\path\to\chrome.exe`
+- `CHROME_BINARY_CANDIDATES=path1;path2`
+- `TEST_RANDOM_SEED=20260419`
+
+### Для API
+
+- `API_BASE_URL=http://localhost:8080`
+- `API_TIMEOUT=10`
+
+## API-сервис
+
+Локальный сервис находится в папке `test-service`.
+
+Основные endpoint'ы:
+
+- `POST /api/create`
+- `GET /api/get/{id}`
+- `GET /api/getAll`
+- `PATCH /api/patch/{id}`
+- `DELETE /api/delete/{id}`
+
+Swagger:
+
+- `http://localhost:8080/api/_/docs/swagger/`
