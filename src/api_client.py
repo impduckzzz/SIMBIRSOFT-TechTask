@@ -1,10 +1,8 @@
 from __future__ import annotations
 
 import allure
-import requests
-from requests import Response, Session
+from requests import Response
 
-from config.settings import SETTINGS
 from src.api_models import (
     CreatedEntityResponse,
     EntityListResponse,
@@ -12,42 +10,41 @@ from src.api_models import (
     EntityResponse,
     NoContentResponse,
 )
+from src.base_api import BaseApi, expect_status
 
 
-class EntityApiClient:
-    def __init__(self, session: Session | None = None, base_url: str = SETTINGS.api_base_url) -> None:
-        self.session = session or requests.Session()
-        self.base_url = base_url.rstrip("/")
-        self.timeout = SETTINGS.api_timeout
+class EntityApiClient(BaseApi):
+    @expect_status(200)
+    def _create_entity_response(self, payload: EntityRequest) -> Response:
+        return self._request("POST", "/api/create", json=payload.model_dump(exclude_none=True))
 
-    def _build_url(self, path: str) -> str:
-        return f"{self.base_url}{path}"
+    @expect_status(200)
+    def _get_entity_response(self, entity_id: int) -> Response:
+        return self._request("GET", f"/api/get/{entity_id}")
 
-    def _request(self, method: str, path: str, **kwargs) -> Response:
-        return self.session.request(method, self._build_url(path), timeout=self.timeout, **kwargs)
+    @expect_status(200)
+    def _get_all_entities_response(self, params: dict[str, str | int | bool]) -> Response:
+        return self._request("GET", "/api/getAll", params=params)
 
-    @staticmethod
-    def _assert_status(response: Response, expected_status: int) -> Response:
-        if response.status_code != expected_status:
-            raise AssertionError(
-                f"Expected status {expected_status}, got {response.status_code}. Response: {response.text}"
-            )
-        return response
+    @expect_status(204)
+    def _update_entity_response(self, entity_id: int, payload: EntityRequest) -> Response:
+        return self._request("PATCH", f"/api/patch/{entity_id}", json=payload.model_dump(exclude_none=True))
 
-    @allure.step("Создать сущность через API")
+    @expect_status(204)
+    def _delete_entity_response(self, entity_id: int) -> Response:
+        return self._request("DELETE", f"/api/delete/{entity_id}")
+
+    @allure.step("Создать сущность")
     def create_entity(self, payload: EntityRequest) -> CreatedEntityResponse:
-        response = self._assert_status(
-            self._request("POST", "/api/create", json=payload.model_dump(exclude_none=True)),
-            200,
-        )
+        response = self._create_entity_response(payload)
         return CreatedEntityResponse(id=int(response.text.strip()))
 
-    @allure.step("Получить сущность по id={entity_id} через API")
+    @allure.step("Получить сущность по id={entity_id}")
     def get_entity(self, entity_id: int) -> EntityResponse:
-        response = self._assert_status(self._request("GET", f"/api/get/{entity_id}"), 200)
+        response = self._get_entity_response(entity_id)
         return EntityResponse.model_validate(response.json())
 
-    @allure.step("Получить список сущностей через API")
+    @allure.step("Получить список сущностей")
     def get_all_entities(
         self,
         *,
@@ -66,18 +63,15 @@ class EntityApiClient:
         if per_page is not None:
             params["perPage"] = per_page
 
-        response = self._assert_status(self._request("GET", "/api/getAll", params=params), 200)
+        response = self._get_all_entities_response(params)
         return EntityListResponse.model_validate(response.json())
 
-    @allure.step("Обновить сущность с id={entity_id} через API")
+    @allure.step("Обновить сущность с id={entity_id}")
     def update_entity(self, entity_id: int, payload: EntityRequest) -> NoContentResponse:
-        response = self._assert_status(
-            self._request("PATCH", f"/api/patch/{entity_id}", json=payload.model_dump(exclude_none=True)),
-            204,
-        )
+        response = self._update_entity_response(entity_id, payload)
         return NoContentResponse(status_code=response.status_code)
 
-    @allure.step("Удалить сущность с id={entity_id} через API")
+    @allure.step("Удалить сущность с id={entity_id}")
     def delete_entity(self, entity_id: int) -> NoContentResponse:
-        response = self._assert_status(self._request("DELETE", f"/api/delete/{entity_id}"), 204)
+        response = self._delete_entity_response(entity_id)
         return NoContentResponse(status_code=response.status_code)
