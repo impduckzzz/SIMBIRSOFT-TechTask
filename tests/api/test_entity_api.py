@@ -14,24 +14,21 @@ from src.api_models import CreatedEntityResponse, EntityRequest
 @allure.story("Создание сущности")
 @allure.title("Можно создать новую сущность")
 @allure.description("Проверка создания новой сущности и последующего чтения созданных данных.")
-def test_create_entity(api_client: EntityApiClient, entity_request_factory):
+def test_create_entity(api_client: EntityApiClient, entity_request_factory, created_entity_factory):
     payload = entity_request_factory(title_prefix="create-entity")
 
     with allure.step("Создать новую сущность"):
-        created_entity = api_client.create_entity(payload)
+        created_entity = created_entity_factory(payload)
 
-    try:
-        with allure.step("Получить созданную сущность и проверить её поля"):
-            actual_entity = api_client.get_entity(created_entity.id)
-            assert created_entity.id > 0
-            assert actual_entity.title == payload.title
-            assert actual_entity.verified is payload.verified
-            assert actual_entity.important_numbers == payload.important_numbers
-            assert actual_entity.addition is not None
-            assert actual_entity.addition.additional_info == payload.addition.additional_info
-            assert actual_entity.addition.additional_number == payload.addition.additional_number
-    finally:
-        api_client.delete_entity(created_entity.id)
+    with allure.step("Получить созданную сущность и проверить её поля"):
+        actual_entity = api_client.get_entity(created_entity.id)
+        assert created_entity.id > 0
+        assert actual_entity.title == payload.title
+        assert actual_entity.verified is payload.verified
+        assert actual_entity.important_numbers == payload.important_numbers
+        assert actual_entity.addition is not None
+        assert actual_entity.addition.additional_info == payload.addition.additional_info
+        assert actual_entity.addition.additional_number == payload.addition.additional_number
 
 
 @allure.epic("API-сервис сущностей")

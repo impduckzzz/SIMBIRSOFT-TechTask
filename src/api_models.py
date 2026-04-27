@@ -39,5 +39,5 @@ class CreatedEntityResponse(BaseModel):
     id: int
 
 
-class NoContentResponse(BaseModel):
+class StatusCodeResponse(BaseModel):
     status_code: int

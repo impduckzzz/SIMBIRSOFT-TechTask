@@ -8,7 +8,7 @@ from src.api_models import (
     EntityListResponse,
     EntityRequest,
     EntityResponse,
-    NoContentResponse,
+    StatusCodeResponse,
 )
 from src.base_api import BaseApi, expect_status
 
@@ -67,11 +67,11 @@ class EntityApiClient(BaseApi):
         return EntityListResponse.model_validate(response.json())
 
     @allure.step("Обновить сущность с id={entity_id}")
-    def update_entity(self, entity_id: int, payload: EntityRequest) -> NoContentResponse:
+    def update_entity(self, entity_id: int, payload: EntityRequest) -> StatusCodeResponse:
         response = self._update_entity_response(entity_id, payload)
-        return NoContentResponse(status_code=response.status_code)
+        return StatusCodeResponse(status_code=response.status_code)
 
     @allure.step("Удалить сущность с id={entity_id}")
-    def delete_entity(self, entity_id: int) -> NoContentResponse:
+    def delete_entity(self, entity_id: int) -> StatusCodeResponse:
         response = self._delete_entity_response(entity_id)
-        return NoContentResponse(status_code=response.status_code)
+        return StatusCodeResponse(status_code=response.status_code)
