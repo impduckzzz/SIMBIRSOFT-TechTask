@@ -23,12 +23,14 @@ def _read_path_list(env_name: str) -> tuple[str, ...]:
 @dataclass(frozen=True)
 class Settings:
     base_url: str = os.getenv("BASE_URL", "https://automationteststore.com/")
+    api_base_url: str = os.getenv("API_BASE_URL", "http://localhost:8080")
     browser: str = os.getenv("BROWSER", "chrome").lower()
     chrome_binary: str = os.getenv("CHROME_BINARY", "")
     chrome_binary_candidates: tuple[str, ...] = _read_path_list("CHROME_BINARY_CANDIDATES")
     headless: bool = os.getenv("HEADLESS", "true").lower() in TRUE_VALUES
     window_size: str = os.getenv("WINDOW_SIZE", "1662,934")
     explicit_wait: int = int(os.getenv("EXPLICIT_WAIT", "20"))
+    api_timeout: int = int(os.getenv("API_TIMEOUT", "10"))
     page_load_timeout: int = int(os.getenv("PAGE_LOAD_TIMEOUT", "60"))
     random_seed: int = int(os.getenv("TEST_RANDOM_SEED", "20260419"))
 
